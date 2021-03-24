@@ -29,4 +29,14 @@
         android:layout_height="match_parent"
         android:translationZ="10dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+    <me.ibrahimsn.particle.ParticleView
+        android:id="@+id/particleView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:particleCount="30"
+        app:particleMinRadius="1"
+        app:particleMaxRadius="4"
+        app:particlesBackgroundColor="@android:color/transparent"
+        app:particleColor="@color/white"
+        app:particleLinesEnabled="false"/>
 </RelativeLayout>

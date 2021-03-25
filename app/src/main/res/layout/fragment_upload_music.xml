@@ -123,7 +123,7 @@
             android:layout_height="wrap_content"
             android:layout_marginRight="25dp"
             android:layout_marginLeft="25dp"
-            android:hint="Song Link URL"
+            android:hint="Song Link"
             android:gravity="center"
             android:elevation="5dp"
             android:singleLine="true"

@@ -67,11 +67,9 @@ public class MusicPlayerFragment extends Fragment implements SongAdapter.onSongS
         recyclerViewAdapter = new SongAdapter(getContext(),MusicPlayerService.songs, selectedSong, this);
         songsRecyclerView.setLayoutManager(recyclerViewLayoutManager);
         songsRecyclerView.setAdapter(recyclerViewAdapter);
-
         ItemTouchHelper.Callback callback = new SongMoveCallback(recyclerViewAdapter);
         ItemTouchHelper touchHelper = new ItemTouchHelper(callback);
         touchHelper.attachToRecyclerView(songsRecyclerView);
-
         songsRecyclerView.setAdapter(recyclerViewAdapter);
 
     }

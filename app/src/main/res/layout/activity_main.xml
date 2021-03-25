@@ -33,7 +33,7 @@
         android:id="@+id/particleView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:particleCount="30"
+        app:particleCount="35"
         app:particleMinRadius="1"
         app:particleMaxRadius="4"
         app:particlesBackgroundColor="@android:color/transparent"

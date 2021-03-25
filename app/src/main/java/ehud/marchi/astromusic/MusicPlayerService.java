@@ -9,9 +9,11 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
+import android.opengl.Visibility;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
+import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.RemoteViews;
@@ -60,7 +62,17 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String command=intent.getStringExtra("command");
+        String notif = intent.getStringExtra("notif");
         currentPlaying = intent.getIntExtra("song",0);
+        if(notif!=null) {
+            if (notif.equals("next")) {
+                if (currentPlaying < songs.size()) {
+                    currentPlaying++;
+                }
+            } else {
+                currentPlaying--;
+            }
+        }
         loadData();
         if(command!=null) {
             switch (command) {
@@ -111,39 +123,54 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
         Log.d("command","play");
         if (!songs.isEmpty() && !mediaPlayer.isPlaying()) {
                 mediaPlayer.start();
+                remoteViews.setViewVisibility(R.id.play, View.GONE);
+                remoteViews.setViewVisibility(R.id.pause, View.VISIBLE);
         }
+
+        Notification notification = builder.build();
+        manager.notify(NOTIF_ID, notification);
     }
 
     private void next() {
-        Log.d("command","next");
+        Log.d("command", "next");
         mediaPlayer.reset();
-        if(!songs.isEmpty()) {
-            try {
-                mediaPlayer.setDataSource(this.songs.get(currentPlaying).getSongLink());
-            } catch (IOException e) {
-                e.printStackTrace();
+        if (!songs.isEmpty()) {
+            if (currentPlaying < songs.size()) {
+                try {
+                    mediaPlayer.setDataSource(this.songs.get(currentPlaying).getSongLink());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                mediaPlayer.prepareAsync();
             }
         }
-        mediaPlayer.prepareAsync();
     }
 
     private void previous() {
         Log.d("command","prev");
         mediaPlayer.reset();
         if(!songs.isEmpty()) {
+            if(currentPlaying>=0) {
             try {
                 mediaPlayer.setDataSource(this.songs.get(currentPlaying).getSongLink());
-            } catch (IOException e) {
+            }
+             catch (IOException e) {
                 e.printStackTrace();
             }
+                mediaPlayer.prepareAsync();
+            }
         }
-        mediaPlayer.prepareAsync();
     }
 
     private void pause() {
         Log.d("command","pause");
-        if (mediaPlayer.isPlaying())
+        if (mediaPlayer.isPlaying()) {
             mediaPlayer.pause();
+            remoteViews.setViewVisibility(R.id.pause, View.GONE);
+            remoteViews.setViewVisibility(R.id.play, View.VISIBLE);
+            Notification notification = builder.build();
+            manager.notify(NOTIF_ID, notification);
+        }
     }
 
     private void stop() {
@@ -154,7 +181,10 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
             if(!songs.isEmpty()) {
                 try {
                     mediaPlayer.setDataSource(this.songs.get(currentPlaying).getSongLink());
-                    //mediaPlayer.prepareAsync();
+                    remoteViews.setViewVisibility(R.id.pause, View.GONE);
+                    remoteViews.setViewVisibility(R.id.play, View.VISIBLE);
+                    Notification notification = builder.build();
+                    manager.notify(NOTIF_ID, notification);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -177,7 +207,6 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
         {
             next();
         }
-        //stopSelf();
     }
 
     @Override
@@ -235,8 +264,15 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
 
         Intent playIntent = new Intent(this, MusicPlayerService.class);
         playIntent.putExtra("command", "play");
+        playIntent.putExtra("song", currentPlaying);
         PendingIntent playPendingIntent = PendingIntent.getService(this, 0, playIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         remoteViews.setOnClickPendingIntent(R.id.play, playPendingIntent);
+
+        Intent pauseIntent = new Intent(this, MusicPlayerService.class);
+        pauseIntent.putExtra("command", "pause");
+        pauseIntent.putExtra("song", currentPlaying);
+        PendingIntent pausePendingIntent = PendingIntent.getService(this, 5, pauseIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        remoteViews.setOnClickPendingIntent(R.id.pause, pausePendingIntent);
 
         Intent stopIntent = new Intent(this,MusicPlayerService.class);
         stopIntent.putExtra("command","stop");
@@ -245,15 +281,17 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
 
         Intent nextIntent=new Intent(this, MusicPlayerService.class);
         nextIntent.putExtra("command", "next");
-        onSongSelected(currentPlaying++);
+        onSongSelected(currentPlaying);
         nextIntent.putExtra("song", currentPlaying);
+        nextIntent.putExtra("notif", "next");
         PendingIntent nextPendingIntent=PendingIntent.getService(this, 2, nextIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         remoteViews.setOnClickPendingIntent(R.id.next, nextPendingIntent);
 
         Intent prevIntent=new Intent(this, MusicPlayerService.class);
         prevIntent.putExtra("command", "prev");
-        onSongSelected(currentPlaying--);
+        onSongSelected(currentPlaying);
         prevIntent.putExtra("song", currentPlaying);
+        prevIntent.putExtra("notif", "prev");
         PendingIntent prevPendingIntent=PendingIntent.getService(this, 3, prevIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         remoteViews.setOnClickPendingIntent(R.id.previous, prevPendingIntent);
 

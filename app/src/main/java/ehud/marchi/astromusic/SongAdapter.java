@@ -85,6 +85,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
                 saveData();
                 Toast.makeText(m_Context, "Song Deleted!", Toast.LENGTH_LONG).show();
                 dialog.dismiss();
+                saveData();
             }
         });
         cancelBtn.setOnClickListener(new View.OnClickListener() {

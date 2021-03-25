@@ -3,6 +3,7 @@ package ehud.marchi.astromusic;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -37,9 +38,9 @@ import static android.content.Context.MODE_PRIVATE;
 
 public class UploadMusicFragment extends Fragment {
     final int CAMERA_REQUEST = 1;
-    final int WRITE_PERMISSION_REQUEST = 2;
-    private final static int IMAGE_PICK_CODE = 10;
-    private final static int PERMISSION_CODE = 11;
+    final int WRITE_PERMISSION_REQUEST = 1;
+    private final static int IMAGE_PICK_CODE=1000;
+    private final static int PERMISSION_CODE=1001;
     Button openGalleryButton, openCameraButton, clearBtn, saveBtn;
     EditText songNameEditText, songArtistEditText, songLinkEditText;
     RelativeLayout saveLayout;
@@ -83,8 +84,7 @@ public class UploadMusicFragment extends Fragment {
         openCameraButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                imageUri = Uri.parse("");
-                file = new File(Environment.getExternalStorageDirectory(), "song_pic.jpg");
+                file = new File(getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES), "song_pic.jpg");
                 imageUri = FileProvider.getUriForFile(getContext(), "ehud.marchi.astromusic.provider", file);
                 Toast.makeText(getContext(), imageUri.toString(), Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -138,7 +138,7 @@ public class UploadMusicFragment extends Fragment {
                     imageUri = Uri.parse("");
                     Glide.with(getContext()).load(imageUri).centerCrop().into(songImageView);
                 } else {
-                    Toast.makeText(getContext(), "Must Fill Song Name, Artist and Link!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "Must fill song name, artist and link!", Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -147,7 +147,8 @@ public class UploadMusicFragment extends Fragment {
             if (hasWritePermission != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_PERMISSION_REQUEST);
             } else openCameraButton.setVisibility(View.VISIBLE);
-        } else openCameraButton.setVisibility(View.VISIBLE);
+        }
+        else openCameraButton.setVisibility(View.VISIBLE);
     }
 
     private boolean isValidSong(String songName, String songArtist, String songLink) {
@@ -187,7 +188,6 @@ public class UploadMusicFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         if (requestCode == CAMERA_REQUEST && resultCode == RESULT_OK) {
             imagePath = file.getAbsolutePath();
             Glide

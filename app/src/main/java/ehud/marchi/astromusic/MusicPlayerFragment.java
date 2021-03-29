@@ -1,7 +1,10 @@
 package ehud.marchi.astromusic;
 
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -23,19 +26,21 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
 
 public class MusicPlayerFragment extends Fragment implements SongAdapter.onSongSelectedListener {
-
     boolean firstClick = true;
     boolean isPlaying = false;
     ImageButton playBtn, stopBtn, prevBtn, nextBtn;
     private RecyclerView songsRecyclerView;
     private SongAdapter recyclerViewAdapter;
     private Song selectedSong = null;
+    public static SeekBar songProgress;
+    public static TextView duration;
     private RecyclerView.LayoutManager recyclerViewLayoutManager;
     ImageView selectedSongImage ,galaxyImageview;
     TextView selectedSongName, selectedSongArtist, nowPlaying;
@@ -91,6 +96,10 @@ public class MusicPlayerFragment extends Fragment implements SongAdapter.onSongS
         selectedSongArtist = getView().findViewById(R.id.selected_song_artist);
         galaxyImageview = getView().findViewById(R.id.galaxy);
         nowPlaying = getView().findViewById(R.id.now_playing);
+        duration = getView().findViewById(R.id.duration);
+        songProgress = getView().findViewById(R.id.song_progress);
+        songProgress.setProgress(0);
+        songProgress.setMax(100);
         animRotate = AnimationUtils.loadAnimation(getContext(),R.anim.rotate);
         getView().findViewById(R.id.planet_logo).startAnimation(animRotate);
         playBtn = getView().findViewById(R.id.play);
@@ -115,9 +124,11 @@ public class MusicPlayerFragment extends Fragment implements SongAdapter.onSongS
                     getContext().startService(intent);
                     galaxyImageview.setVisibility(View.VISIBLE);
                     nowPlaying.setVisibility(View.VISIBLE);
+                    duration.setVisibility(View.VISIBLE);
                     Animation spinAnim = AnimationUtils.loadAnimation(getContext(),R.anim.infinite_rotate);
                     galaxyImageview.startAnimation(spinAnim);
                     nowPlaying.startAnimation(AnimationUtils.loadAnimation(getContext(),R.anim.fade_in));
+                    duration.startAnimation(AnimationUtils.loadAnimation(getContext(),R.anim.fade_in));
                     isPlaying = true;
                     firstClick= false;
                     stopBtn.setEnabled(true);
@@ -131,8 +142,10 @@ public class MusicPlayerFragment extends Fragment implements SongAdapter.onSongS
                     Animation fadeOutAnim = AnimationUtils.loadAnimation(getContext(),R.anim.fade_out);
                     galaxyImageview.startAnimation(fadeOutAnim);
                     nowPlaying.startAnimation(fadeOutAnim);
+                    duration.startAnimation(fadeOutAnim);
                     galaxyImageview.setVisibility(View.GONE);
                     nowPlaying.setVisibility(View.GONE);
+                    duration.setVisibility(View.GONE);
                     getContext().startService(intent);
                     isPlaying = false;
                 }
@@ -146,6 +159,8 @@ public class MusicPlayerFragment extends Fragment implements SongAdapter.onSongS
             @Override
             public void onClick(View v) {
                 if(isPlaying) {
+                    songProgress.setProgress(0);
+                    songProgress.setMax(100);
                     playBtn.setBackgroundResource(R.drawable.play);
                     Intent intent = new Intent(getContext(), MusicPlayerService.class);
                     intent.putExtra("command", "stop");
@@ -157,8 +172,10 @@ public class MusicPlayerFragment extends Fragment implements SongAdapter.onSongS
                     Animation fadeOutAnim = AnimationUtils.loadAnimation(getContext(),R.anim.fade_out);
                     galaxyImageview.startAnimation(fadeOutAnim);
                     nowPlaying.startAnimation(fadeOutAnim);
+                    duration.startAnimation(fadeOutAnim);
                     galaxyImageview.setVisibility(View.GONE);
                     nowPlaying.setVisibility(View.GONE);
+                    duration.setVisibility(View.GONE);
                 }
             }
         });
@@ -170,12 +187,10 @@ public class MusicPlayerFragment extends Fragment implements SongAdapter.onSongS
                     recyclerViewAdapter.m_SelectedItemIndex--;
                     selectedSong = MusicPlayerService.songs.get(recyclerViewAdapter.m_SelectedItemIndex);
                     refreshSelectedSong(MusicPlayerService.songs.get(recyclerViewAdapter.m_SelectedItemIndex));
-                    if(isPlaying) {
                         Intent intent = new Intent(getContext(), MusicPlayerService.class);
                         intent.putExtra("command", "prev");
                         intent.putExtra("song", recyclerViewAdapter.m_SelectedItemIndex);
                         getContext().startService(intent);
-                    }
                     prevBtn.startAnimation(AnimationUtils.loadAnimation(getContext(),R.anim.click));
                 }
             }
@@ -188,12 +203,10 @@ public class MusicPlayerFragment extends Fragment implements SongAdapter.onSongS
                     recyclerViewAdapter.m_SelectedItemIndex++;
                     selectedSong = MusicPlayerService.songs.get(recyclerViewAdapter.m_SelectedItemIndex);
                     refreshSelectedSong(MusicPlayerService.songs.get(recyclerViewAdapter.m_SelectedItemIndex));
-                    if(isPlaying) {
                         Intent intent = new Intent(getContext(), MusicPlayerService.class);
                         intent.putExtra("command", "next");
                         intent.putExtra("song", recyclerViewAdapter.m_SelectedItemIndex);
                         getContext().startService(intent);
-                    }
                     nextBtn.startAnimation(AnimationUtils.loadAnimation(getContext(),R.anim.click));
                 }
             }
@@ -233,6 +246,8 @@ public class MusicPlayerFragment extends Fragment implements SongAdapter.onSongS
     }
     private void refreshSelectedSong(Song selectedSong)
     {
+        songProgress.setProgress(0);
+        songProgress.setMax(100);
         if(selectedSongLayout.getVisibility() == View.GONE) {
             selectedSongLayout.setVisibility(View.VISIBLE);
             Animation animSlideIn = AnimationUtils.loadAnimation(getContext(), R.anim.slide_left_to_right);
@@ -274,4 +289,5 @@ public class MusicPlayerFragment extends Fragment implements SongAdapter.onSongS
             prevBtn.setAlpha(1f);
         }
     }
+
 }

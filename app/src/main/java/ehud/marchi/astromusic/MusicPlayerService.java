@@ -9,15 +9,14 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
-import android.opengl.Visibility;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.RemoteViews;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
@@ -32,11 +31,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 
 
-public class MusicPlayerService extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener, SongAdapter.onSongSelectedListener{
+public class MusicPlayerService extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener, SongAdapter.onSongSelectedListener , SeekBar.OnSeekBarChangeListener{
 
     private MediaPlayer mediaPlayer = new MediaPlayer();
     public static ArrayList<Song> songs = new ArrayList<>();
@@ -45,6 +42,9 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     NotificationManager manager;
     final int NOTIF_ID = 1;
     RemoteViews remoteViews;
+    SeekBar songProgressBar;
+    TextView duration;
+    private Handler handler = new Handler();
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -57,10 +57,14 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
         mediaPlayer.setOnCompletionListener(this);
         mediaPlayer.setOnPreparedListener(this);
         mediaPlayer.reset();
+        songProgressBar = MusicPlayerFragment.songProgress;
+        songProgressBar.setOnSeekBarChangeListener(this);
+        duration = MusicPlayerFragment.duration;
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        handler.removeCallbacks(mUpdateTimeTask);
         String command=intent.getStringExtra("command");
         String notif = intent.getStringExtra("notif");
         currentPlaying = intent.getIntExtra("song",0);
@@ -123,6 +127,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
         Log.d("command","play");
         if (!songs.isEmpty() && !mediaPlayer.isPlaying()) {
                 mediaPlayer.start();
+                updateProgressBar();
                 remoteViews.setViewVisibility(R.id.play, View.GONE);
                 remoteViews.setViewVisibility(R.id.pause, View.VISIBLE);
         }
@@ -203,15 +208,16 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
 
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
-        if(currentPlaying<songs.size())
-        {
-            next();
-        }
+        handler.removeCallbacks(mUpdateTimeTask);
+        currentPlaying++;
+        next();
     }
 
     @Override
     public void onPrepared(MediaPlayer mediaPlayer) {
         this.mediaPlayer.start();
+        songProgressBar.setProgress(0);
+        moveSeekbar(songProgressBar);
         ShowNotification();
         remoteViews.setTextViewText(R.id.song_name, songs.get(currentPlaying).getSongName());
         remoteViews.setTextViewText(R.id.song_artist, songs.get(currentPlaying).getSongArtist());
@@ -305,7 +311,94 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
     @Override
-    public void onSongSelected(int songIndex) {
+    public void onSongSelected(int songIndex)
+    {
         currentPlaying = songIndex;
+    }
+    public void updateProgressBar() {
+        handler.postDelayed(mUpdateTimeTask, 30);
+    }
+    private Runnable mUpdateTimeTask = new Runnable() {
+        public void run() {
+            long totalDuration = mediaPlayer.getDuration();
+            long currentDuration = mediaPlayer.getCurrentPosition();
+            duration.setText(milliSecondsToTimer(currentDuration));
+            // Updating progress bar
+            int progress = (int)(getProgressPercentage(currentDuration, totalDuration));
+            //Log.d("Progress", ""+progress);
+            songProgressBar.setProgress(progress);
+
+            handler.postDelayed(this, 30);
+        }
+    };
+    public String milliSecondsToTimer(long milliseconds){
+        String finalTimerString = "";
+        String secondsString = "";
+
+        // Convert total duration into time
+        int hours = (int)( milliseconds / (1000*60*60));
+        int minutes = (int)(milliseconds % (1000*60*60)) / (1000*60);
+        int seconds = (int) ((milliseconds % (1000*60*60)) % (1000*60) / 1000);
+        // Add hours if there
+        if(hours > 0){
+            finalTimerString = hours + ":";
+        }
+
+        // Prepending 0 to seconds if it is one digit
+        if(seconds < 10){
+            secondsString = "0" + seconds;
+        }else{
+            secondsString = "" + seconds;}
+
+        finalTimerString = finalTimerString + minutes + ":" + secondsString;
+
+        // return timer string
+        return finalTimerString;
+    }
+    public int getProgressPercentage(long currentDuration, long totalDuration){
+        Double percentage = (double) 0;
+
+        long currentSeconds = (int) (currentDuration / 1000);
+        long totalSeconds = (int) (totalDuration / 1000);
+
+        // calculating percentage
+        percentage =(((double)currentSeconds)/totalSeconds)*100;
+
+        // return percentage
+        return percentage.intValue();
+    }
+    public int progressToTimer(int progress, int totalDuration) {
+        int currentDuration = 0;
+        totalDuration = (int) (totalDuration / 1000);
+        currentDuration = (int) ((((double)progress) / 100) * totalDuration);
+
+        // return current duration in milliseconds
+        return currentDuration * 1000;
+    }
+
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromTouch) {
+
+    }
+
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+        // remove message Handler from updating progress bar
+        handler.removeCallbacks(mUpdateTimeTask);
+    }
+
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+        moveSeekbar(seekBar);
+    }
+
+    private void moveSeekbar(SeekBar seekBar) {
+        if(mediaPlayer.isPlaying()) {
+            handler.removeCallbacks(mUpdateTimeTask);
+            int totalDuration = mediaPlayer.getDuration();
+            int currentPosition = progressToTimer(seekBar.getProgress(), totalDuration);
+            mediaPlayer.seekTo(currentPosition);
+            updateProgressBar();
+        }
     }
 }

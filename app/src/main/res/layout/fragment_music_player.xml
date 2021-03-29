@@ -127,6 +127,22 @@
             android:backgroundTint="@color/black"/>
         <TextView
             android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/duration"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:layout_alignParentRight="true"
+            android:textSize="17dp"
+            android:textColor="@color/white"
+            android:text="0:00"
+            android:shadowRadius="7"
+            android:shadowColor="@color/black"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="17dp"
+            />
+        <TextView
+            android:visibility="gone"
             android:id="@+id/now_playing"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -156,16 +172,16 @@ android:layout_alignParentBottom="true"
             android:layout_marginLeft="20dp"
             android:layout_marginRight="20dp"
             android:layout_marginBottom="15dp"
+            android:layout_marginTop="19dp"
             android:id="@+id/previous"
             android:elevation="10dp"
-            android:layout_centerVertical="true"
             android:background="@drawable/previous"/>
 
         <ImageButton
             android:id="@+id/stop"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:layout_centerVertical="true"
+            android:layout_marginTop="15dp"
             android:layout_marginLeft="20dp"
             android:layout_marginRight="20dp"
             android:layout_marginBottom="15dp"
@@ -181,7 +197,7 @@ android:layout_alignParentBottom="true"
             android:layout_marginBottom="15dp"
             android:id="@+id/play"
             android:elevation="10dp"
-            android:layout_centerVertical="true"
+            android:layout_marginTop="15dp"
             android:layout_toRightOf="@id/stop"
             android:background="@drawable/play"/>
         <ImageButton
@@ -192,9 +208,20 @@ android:layout_alignParentBottom="true"
             android:layout_marginBottom="15dp"
             android:id="@+id/next"
             android:elevation="10dp"
-            android:layout_centerVertical="true"
+            android:layout_marginTop="19dp"
             android:layout_toRightOf="@id/play"
             android:background="@drawable/next"/>
     </RelativeLayout>
 
+    <SeekBar
+        android:id="@+id/song_progress"
+        android:thumbTint="@color/mango"
+        android:progressTint="@color/mango"
+        android:progressBackgroundTint="@color/white"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="15dp"
+        android:layout_marginLeft="15dp"
+        android:layout_below="@id/control_panel"
+        android:layout_marginTop="-20dp" />
 </RelativeLayout>

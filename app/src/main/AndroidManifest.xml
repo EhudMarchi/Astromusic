@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="ehud.marchi.astromusic">
 
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -36,6 +37,11 @@
                 android:resource="@xml/files_dir">
             </meta-data>
         </provider>
+        <receiver android:name=".MusicPlayerFragment$ActionsReceiver">
+            <intent-filter>
+                <action android:name="ehud.marchi.astromusic.refresh"/>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

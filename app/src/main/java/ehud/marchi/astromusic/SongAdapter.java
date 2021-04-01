@@ -29,12 +29,9 @@ import static android.content.Context.MODE_PRIVATE;
 
 public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder> implements SongMoveCallback.SongTouchHelperContract {
     private ArrayList<Song> songs;
-    private ArrayList<Song> m_AllGames;
-    private ArrayList<Song> selectedGames;
     private Song selectedSong = null;
     Context m_Context;
     int m_SelectedItemIndex = 0;
-    boolean isDialog = false;
     onSongSelectedListener onSongSelectedListener;
     @Override
     public void onRowMoved(int fromPosition, int toPosition) {
@@ -131,7 +128,6 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
 
     public SongAdapter(Context context, ArrayList<Song> songsList, Song selected, onSongSelectedListener onSongSelectedListener) {
         songs = songsList;
-        m_AllGames = songsList;
         this.m_Context = context;
         this.selectedSong = selected;
         this.onSongSelectedListener = onSongSelectedListener;

@@ -28,6 +28,7 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
@@ -46,6 +47,7 @@ public class MusicPlayerFragment extends Fragment implements SongAdapter.onSongS
     TextView selectedSongName, selectedSongArtist, nowPlaying;
     RelativeLayout selectedSongLayout;
     Animation animRotate;
+    ActionsReceiver actionsReceiver;
     public MusicPlayerFragment() {
         // Required empty public constructor
     }
@@ -85,10 +87,49 @@ public class MusicPlayerFragment extends Fragment implements SongAdapter.onSongS
         return inflater.inflate(R.layout.fragment_music_player, container, false);
 
     }
+    public static class ActionsReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String command =intent.getStringExtra("command");
+            Intent broadcastIntent = new Intent("ehud.marchi.astromusic.refresh");
+            broadcastIntent.putExtra("command",command);
+            context.sendBroadcast(broadcastIntent);
+        }
 
+        public ActionsReceiver() {
+            super();
+        }
+    }
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        actionsReceiver = new ActionsReceiver(){
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String command =intent.getStringExtra("command");
+                if(command!=null)
+                {
+                    if (command.equals("finish")) {
+                    if (recyclerViewAdapter.m_SelectedItemIndex < MusicPlayerService.songs.size() - 1) {
+                        nextBtn.callOnClick();
+                    } else {
+                        stopBtn.callOnClick();
+                        Toast.makeText(context, "No more songs..", Toast.LENGTH_LONG).show();
+                    }
+                }
+                    else if(command.equals("next"))
+                    {
+                        nextBtn.callOnClick();
+                    }
+                    else if(command.equals("prev"))
+                    {
+                        prevBtn.callOnClick();
+                    }
+            }
+            }
+        };
+        IntentFilter filter = new IntentFilter("ehud.marchi.astromusic.refresh");
+        getActivity().registerReceiver(actionsReceiver,filter);
         setUpSongsRecyclerView();
         selectedSongLayout = getView().findViewById(R.id.selected_song);
         selectedSongImage = getView().findViewById(R.id.selected_song_image);
@@ -184,14 +225,14 @@ public class MusicPlayerFragment extends Fragment implements SongAdapter.onSongS
             @Override
             public void onClick(View v) {
                 if(recyclerViewAdapter.m_SelectedItemIndex>0) {
-                    recyclerViewAdapter.m_SelectedItemIndex--;
-                    selectedSong = MusicPlayerService.songs.get(recyclerViewAdapter.m_SelectedItemIndex);
-                    refreshSelectedSong(MusicPlayerService.songs.get(recyclerViewAdapter.m_SelectedItemIndex));
+                    selectedSong = MusicPlayerService.songs.get(recyclerViewAdapter.m_SelectedItemIndex-1);
                         Intent intent = new Intent(getContext(), MusicPlayerService.class);
                         intent.putExtra("command", "prev");
-                        intent.putExtra("song", recyclerViewAdapter.m_SelectedItemIndex);
+                        intent.putExtra("song", recyclerViewAdapter.m_SelectedItemIndex-1);
                         getContext().startService(intent);
                     prevBtn.startAnimation(AnimationUtils.loadAnimation(getContext(),R.anim.click));
+                    recyclerViewAdapter.m_SelectedItemIndex--;
+                    refreshSelectedSong(MusicPlayerService.songs.get(recyclerViewAdapter.m_SelectedItemIndex));
                 }
             }
         });
@@ -200,14 +241,15 @@ public class MusicPlayerFragment extends Fragment implements SongAdapter.onSongS
             @Override
             public void onClick(View v) {
                 if(recyclerViewAdapter.m_SelectedItemIndex<MusicPlayerService.songs.size()) {
-                    recyclerViewAdapter.m_SelectedItemIndex++;
-                    selectedSong = MusicPlayerService.songs.get(recyclerViewAdapter.m_SelectedItemIndex);
-                    refreshSelectedSong(MusicPlayerService.songs.get(recyclerViewAdapter.m_SelectedItemIndex));
+                    //recyclerViewAdapter.m_SelectedItemIndex++;
+                    selectedSong = MusicPlayerService.songs.get(recyclerViewAdapter.m_SelectedItemIndex+1);
                         Intent intent = new Intent(getContext(), MusicPlayerService.class);
                         intent.putExtra("command", "next");
-                        intent.putExtra("song", recyclerViewAdapter.m_SelectedItemIndex);
+                        intent.putExtra("song", recyclerViewAdapter.m_SelectedItemIndex+1);
                         getContext().startService(intent);
                     nextBtn.startAnimation(AnimationUtils.loadAnimation(getContext(),R.anim.click));
+                    recyclerViewAdapter.m_SelectedItemIndex++;
+                    refreshSelectedSong(MusicPlayerService.songs.get(recyclerViewAdapter.m_SelectedItemIndex));
                 }
             }
         });
@@ -290,4 +332,9 @@ public class MusicPlayerFragment extends Fragment implements SongAdapter.onSongS
         }
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        getActivity().unregisterReceiver(actionsReceiver);
+    }
 }

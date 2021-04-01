@@ -70,11 +70,17 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
         currentPlaying = intent.getIntExtra("song",0);
         if(notif!=null) {
             if (notif.equals("next")) {
+                currentPlaying++;
                 if (currentPlaying < songs.size()) {
-                    currentPlaying++;
+                    Intent notifNextIntent = new Intent(this, MusicPlayerFragment.ActionsReceiver.class).setAction("ehud.marchi.astromusic.refresh");
+                    notifNextIntent.putExtra("command","next");
+                    sendBroadcast(notifNextIntent);
                 }
             } else {
                 currentPlaying--;
+                Intent notifPrevIntent = new Intent(this, MusicPlayerFragment.ActionsReceiver.class).setAction("ehud.marchi.astromusic.refresh");
+                notifPrevIntent.putExtra("command","prev");
+                sendBroadcast(notifPrevIntent);
             }
         }
         loadData();
@@ -108,6 +114,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
                     stopSelf();
             }
         }
+        ShowNotification();
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -210,7 +217,9 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     public void onCompletion(MediaPlayer mediaPlayer) {
         handler.removeCallbacks(mUpdateTimeTask);
         currentPlaying++;
-        next();
+        Intent finishIntent = new Intent(this, MusicPlayerFragment.ActionsReceiver.class).setAction("ehud.marchi.astromusic.refresh");
+        finishIntent.putExtra("command","finish");
+        sendBroadcast(finishIntent);
     }
 
     @Override
@@ -218,7 +227,6 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
         this.mediaPlayer.start();
         songProgressBar.setProgress(0);
         moveSeekbar(songProgressBar);
-        ShowNotification();
         remoteViews.setTextViewText(R.id.song_name, songs.get(currentPlaying).getSongName());
         remoteViews.setTextViewText(R.id.song_artist, songs.get(currentPlaying).getSongArtist());
         Glide.with(this).asBitmap().load(songs.get(currentPlaying).getImageURL()).into(new CustomTarget<Bitmap>() {
@@ -287,15 +295,14 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
 
         Intent nextIntent=new Intent(this, MusicPlayerService.class);
         nextIntent.putExtra("command", "next");
-        onSongSelected(currentPlaying);
         nextIntent.putExtra("song", currentPlaying);
         nextIntent.putExtra("notif", "next");
         PendingIntent nextPendingIntent=PendingIntent.getService(this, 2, nextIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         remoteViews.setOnClickPendingIntent(R.id.next, nextPendingIntent);
 
+
         Intent prevIntent=new Intent(this, MusicPlayerService.class);
         prevIntent.putExtra("command", "prev");
-        onSongSelected(currentPlaying);
         prevIntent.putExtra("song", currentPlaying);
         prevIntent.putExtra("notif", "prev");
         PendingIntent prevPendingIntent=PendingIntent.getService(this, 3, prevIntent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -315,6 +322,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     {
         currentPlaying = songIndex;
     }
+    //Progress bar section:
     public void updateProgressBar() {
         handler.postDelayed(mUpdateTimeTask, 30);
     }

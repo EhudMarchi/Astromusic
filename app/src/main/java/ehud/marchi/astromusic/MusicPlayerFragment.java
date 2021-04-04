@@ -90,7 +90,7 @@ public class MusicPlayerFragment extends Fragment implements SongAdapter.onSongS
     public static class ActionsReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String command =intent.getStringExtra("command");
+            String command = intent.getStringExtra("broadcast_command");
             Intent broadcastIntent = new Intent("ehud.marchi.astromusic.refresh");
             broadcastIntent.putExtra("command",command);
             context.sendBroadcast(broadcastIntent);
@@ -124,6 +124,41 @@ public class MusicPlayerFragment extends Fragment implements SongAdapter.onSongS
                     else if(command.equals("prev"))
                     {
                         prevBtn.callOnClick();
+                    }
+                    else if(command.equals("stop"))
+                    {
+                        stopBtn.callOnClick();
+                    }
+                    else if(command.equals("pause")||command.equals("play"))
+                    {
+                        if(!isPlaying) {
+                            playBtn.setBackgroundResource(R.drawable.pause);
+                            galaxyImageview.setVisibility(View.VISIBLE);
+                            nowPlaying.setVisibility(View.VISIBLE);
+                            duration.setVisibility(View.VISIBLE);
+                            Animation spinAnim = AnimationUtils.loadAnimation(getContext(),R.anim.infinite_rotate);
+                            galaxyImageview.startAnimation(spinAnim);
+                            nowPlaying.startAnimation(AnimationUtils.loadAnimation(getContext(),R.anim.fade_in));
+                            duration.startAnimation(AnimationUtils.loadAnimation(getContext(),R.anim.fade_in));
+                            isPlaying = true;
+                            firstClick= false;
+                            stopBtn.setEnabled(true);
+                            stopBtn.setAlpha(1f);
+                        }
+                        else
+                        {
+                            playBtn.setBackgroundResource(R.drawable.play);
+                            galaxyImageview.clearAnimation();
+                            Animation fadeOutAnim = AnimationUtils.loadAnimation(getContext(),R.anim.fade_out);
+                            galaxyImageview.startAnimation(fadeOutAnim);
+                            nowPlaying.startAnimation(fadeOutAnim);
+                            duration.startAnimation(fadeOutAnim);
+                            galaxyImageview.setVisibility(View.GONE);
+                            nowPlaying.setVisibility(View.GONE);
+                            duration.setVisibility(View.GONE);
+                            isPlaying = false;
+                        }
+                        playBtn.startAnimation(AnimationUtils.loadAnimation(getContext(),R.anim.click));
                     }
             }
             }

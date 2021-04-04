@@ -44,6 +44,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     RemoteViews remoteViews;
     SeekBar songProgressBar;
     TextView duration;
+    boolean isStopped = false;
     private Handler handler = new Handler();
     @Nullable
     @Override
@@ -73,17 +74,36 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
                 currentPlaying++;
                 if (currentPlaying < songs.size()) {
                     Intent notifNextIntent = new Intent(this, MusicPlayerFragment.ActionsReceiver.class).setAction("ehud.marchi.astromusic.refresh");
-                    notifNextIntent.putExtra("command","next");
+                    notifNextIntent.putExtra("broadcast_command","next");
                     sendBroadcast(notifNextIntent);
                 }
-            } else {
+            } else if (notif.equals("prev")) {
                 currentPlaying--;
                 Intent notifPrevIntent = new Intent(this, MusicPlayerFragment.ActionsReceiver.class).setAction("ehud.marchi.astromusic.refresh");
-                notifPrevIntent.putExtra("command","prev");
+                notifPrevIntent.putExtra("broadcast_command","prev");
+                sendBroadcast(notifPrevIntent);
+            }
+            else if (notif.equals("pause"))
+            {
+                Intent notifPrevIntent = new Intent(this, MusicPlayerFragment.ActionsReceiver.class).setAction("ehud.marchi.astromusic.refresh");
+                notifPrevIntent.putExtra("broadcast_command","pause");
+                sendBroadcast(notifPrevIntent);
+            }
+            else if (notif.equals("play"))
+            {
+                Intent notifPrevIntent = new Intent(this, MusicPlayerFragment.ActionsReceiver.class).setAction("ehud.marchi.astromusic.refresh");
+                notifPrevIntent.putExtra("broadcast_command","play");
+                sendBroadcast(notifPrevIntent);
+            }
+            else if (notif.equals("stop"))
+            {
+                Intent notifPrevIntent = new Intent(this, MusicPlayerFragment.ActionsReceiver.class).setAction("ehud.marchi.astromusic.refresh");
+                notifPrevIntent.putExtra("broadcast_command","stop");
                 sendBroadcast(notifPrevIntent);
             }
         }
         loadData();
+        ShowNotification();
         if(command!=null) {
             switch (command) {
                 case "new_song":
@@ -114,7 +134,6 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
                     stopSelf();
             }
         }
-        ShowNotification();
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -122,6 +141,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
         Log.d("command","new_song");
         if (!songs.isEmpty() && !mediaPlayer.isPlaying()) {
             try {
+                mediaPlayer.stop();
                 mediaPlayer.setDataSource(this.songs.get(currentPlaying).getSongLink());
                 mediaPlayer.prepareAsync();
             } catch (IOException e) {
@@ -133,12 +153,18 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     private void play() {
         Log.d("command","play");
         if (!songs.isEmpty() && !mediaPlayer.isPlaying()) {
+            if(!isStopped) {
                 mediaPlayer.start();
-                updateProgressBar();
-                remoteViews.setViewVisibility(R.id.play, View.GONE);
+            }
+            else
+            {
+                newSong();
+            }
+                remoteViews.setViewVisibility(R.id.play, View.INVISIBLE);
                 remoteViews.setViewVisibility(R.id.pause, View.VISIBLE);
+            updateProgressBar();
+            isStopped = false;
         }
-
         Notification notification = builder.build();
         manager.notify(NOTIF_ID, notification);
     }
@@ -175,18 +201,20 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
     private void pause() {
-        Log.d("command","pause");
         if (mediaPlayer.isPlaying()) {
-            mediaPlayer.pause();
-            remoteViews.setViewVisibility(R.id.pause, View.GONE);
+            Log.d("command","pause");
+            remoteViews.setViewVisibility(R.id.pause, View.INVISIBLE);
             remoteViews.setViewVisibility(R.id.play, View.VISIBLE);
+            mediaPlayer.pause();
             Notification notification = builder.build();
             manager.notify(NOTIF_ID, notification);
+            Log.d("command","paused");
         }
     }
 
     private void stop() {
         Log.d("command","stop");
+        isStopped = true;
         if (mediaPlayer.isPlaying())
         {mediaPlayer.stop();
             mediaPlayer.reset();
@@ -216,14 +244,11 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
         handler.removeCallbacks(mUpdateTimeTask);
-        currentPlaying++;
-        Intent finishIntent = new Intent(this, MusicPlayerFragment.ActionsReceiver.class).setAction("ehud.marchi.astromusic.refresh");
-        finishIntent.putExtra("command","finish");
-        sendBroadcast(finishIntent);
     }
 
     @Override
     public void onPrepared(MediaPlayer mediaPlayer) {
+        isStopped = false;
         this.mediaPlayer.start();
         songProgressBar.setProgress(0);
         moveSeekbar(songProgressBar);
@@ -279,17 +304,21 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
         Intent playIntent = new Intent(this, MusicPlayerService.class);
         playIntent.putExtra("command", "play");
         playIntent.putExtra("song", currentPlaying);
+        playIntent.putExtra("notif", "play");
         PendingIntent playPendingIntent = PendingIntent.getService(this, 0, playIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         remoteViews.setOnClickPendingIntent(R.id.play, playPendingIntent);
 
         Intent pauseIntent = new Intent(this, MusicPlayerService.class);
         pauseIntent.putExtra("command", "pause");
         pauseIntent.putExtra("song", currentPlaying);
+        pauseIntent.putExtra("notif", "pause");
         PendingIntent pausePendingIntent = PendingIntent.getService(this, 5, pauseIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         remoteViews.setOnClickPendingIntent(R.id.pause, pausePendingIntent);
 
         Intent stopIntent = new Intent(this,MusicPlayerService.class);
         stopIntent.putExtra("command","stop");
+        stopIntent.putExtra("song", currentPlaying);
+        stopIntent.putExtra("notif", "stop");
         PendingIntent stopPendingIntent = PendingIntent.getService(this,1,stopIntent,PendingIntent.FLAG_UPDATE_CURRENT);
         remoteViews.setOnClickPendingIntent(R.id.stop,stopPendingIntent);
 
@@ -324,7 +353,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     }
     //Progress bar section:
     public void updateProgressBar() {
-        handler.postDelayed(mUpdateTimeTask, 30);
+        handler.postDelayed(mUpdateTimeTask, 100);
     }
     private Runnable mUpdateTimeTask = new Runnable() {
         public void run() {
@@ -335,8 +364,15 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
             int progress = (int)(getProgressPercentage(currentDuration, totalDuration));
             //Log.d("Progress", ""+progress);
             songProgressBar.setProgress(progress);
-
-            handler.postDelayed(this, 30);
+            if(progress==100)
+            {
+                handler.removeCallbacks(mUpdateTimeTask);
+                currentPlaying++;
+                Intent finishIntent = new Intent(getApplicationContext(), MusicPlayerFragment.ActionsReceiver.class).setAction("ehud.marchi.astromusic.refresh");
+                finishIntent.putExtra("broadcast_command","finish");
+                sendBroadcast(finishIntent);
+            }
+            handler.postDelayed(this, 100);
         }
     };
     public String milliSecondsToTimer(long milliseconds){

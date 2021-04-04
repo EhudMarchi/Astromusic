@@ -18,9 +18,11 @@ import android.widget.Toast;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,6 +63,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
         myViewHolder.rowView.setAlpha(1f);
         myViewHolder.rowView.clearAnimation();
         saveData();
+        notifyDataSetChanged();
     }
 
     @Override
@@ -82,7 +85,6 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
                 saveData();
                 Toast.makeText(m_Context, "Song Deleted!", Toast.LENGTH_LONG).show();
                 dialog.dismiss();
-                saveData();
             }
         });
         cancelBtn.setOnClickListener(new View.OnClickListener() {
@@ -108,6 +110,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
             e.printStackTrace();
         }
     }
+
     public interface onSongSelectedListener {
         void onSongSelected(int songIndex);
 

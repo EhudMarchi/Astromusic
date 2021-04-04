@@ -2,6 +2,8 @@ package ehud.marchi.astromusic;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager.widget.ViewPager;
+
+import android.app.NotificationManager;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import com.google.android.material.tabs.TabLayout;

@@ -139,9 +139,9 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
 
     private void newSong() {
         Log.d("command","new_song");
+        mediaPlayer.reset();
         if (!songs.isEmpty() && !mediaPlayer.isPlaying()) {
             try {
-                mediaPlayer.stop();
                 mediaPlayer.setDataSource(this.songs.get(currentPlaying).getSongLink());
                 mediaPlayer.prepareAsync();
             } catch (IOException e) {
@@ -353,7 +353,8 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     }
     //Progress bar section:
     public void updateProgressBar() {
-        handler.postDelayed(mUpdateTimeTask, 100);
+        if(mediaPlayer.isPlaying())
+            handler.postDelayed(mUpdateTimeTask, 100);
     }
     private Runnable mUpdateTimeTask = new Runnable() {
         public void run() {

@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Random;
 
 import static android.app.Activity.RESULT_OK;
 import static android.content.Context.MODE_PRIVATE;
@@ -48,7 +49,6 @@ public class UploadMusicFragment extends Fragment {
     EditText songNameEditText, songArtistEditText, songLinkEditText;
     RelativeLayout saveLayout;
     File file;
-    String imagePath;
     Uri imageUri;
     ImageView songImageView, astronaut ,spaceship;
 
@@ -63,6 +63,7 @@ public class UploadMusicFragment extends Fragment {
         fragment.setArguments(args);
         return fragment;
     }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -87,9 +88,9 @@ public class UploadMusicFragment extends Fragment {
         openCameraButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                file = new File(getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES), "song_pic.jpg");
+                file = new File(getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES), "song_pic"+new Random().nextInt(100000)+".jpg");
                 imageUri = FileProvider.getUriForFile(getContext(), "ehud.marchi.astromusic.provider", file);
-                Toast.makeText(getContext(), imageUri.toString(), Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getContext(), imageUri.toString(), Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
                 startActivityForResult(intent, CAMERA_REQUEST);
@@ -145,6 +146,9 @@ public class UploadMusicFragment extends Fragment {
                 }
             }
         });
+    }
+
+    private void askPermission() {
         if (Build.VERSION.SDK_INT >= 23) {
             int hasWritePermission = getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
             if (hasWritePermission != PackageManager.PERMISSION_GRANTED) {
@@ -193,7 +197,6 @@ public class UploadMusicFragment extends Fragment {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == CAMERA_REQUEST && resultCode == RESULT_OK) {
-            imagePath = file.getAbsolutePath();
             Glide
                     .with(this)
                     .load(imageUri)

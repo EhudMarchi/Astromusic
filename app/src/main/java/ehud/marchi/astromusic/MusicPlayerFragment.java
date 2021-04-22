@@ -52,14 +52,6 @@ public class MusicPlayerFragment extends Fragment implements SongAdapter.onSongS
         // Required empty public constructor
     }
 
-    public static MusicPlayerFragment newInstance(String param1, String param2) {
-        MusicPlayerFragment fragment = new MusicPlayerFragment();
-        Bundle args = new Bundle();
-
-        fragment.setArguments(args);
-        return fragment;
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

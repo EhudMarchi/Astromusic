@@ -17,10 +17,6 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
-    final int CAMERA_REQUEST = 1;
-    private final static int IMAGE_PICK_CODE=1000;
-    private final static int PERMISSION_CODE=1001;
-    final int WRITE_PERMISSION_REQUEST=1;
 
     private ViewPager viewPager;
     private TabLayout tabLayout;
@@ -38,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
         viewPager.setAdapter(tabAccessorAdapter);
         sharedPreferences = getSharedPreferences("song_first", MODE_PRIVATE);
         Boolean firstTime = sharedPreferences.getBoolean("firstTime", true);
-        //firstTime = true;
+
         if (firstTime) {
             SharedPreferences.Editor editor = sharedPreferences.edit();
             initSongs();
